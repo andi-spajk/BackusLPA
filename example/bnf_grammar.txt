@@ -1,0 +1,49 @@
+.BNF
+
+<grammar> ::= <productions>
+
+<productions> ::= <rule> <productions>
+                | ""
+
+<rule> ::= <non-terminal> "::=" <rhs>
+<rhs> ::= <symbol> <symbols> <alternation>
+<symbol> ::= <terminal> | <non-terminal>
+<symbols> ::= <symbol> <symbols>
+            | ""
+<alternation> ::= '|' <rhs>
+                | ""
+
+<non-terminal> ::= '<' <identifier> '>'
+<identifier> ::= <id-char> <id-chars>
+<id-chars> ::= <id-char> <id-chars>
+             | ""
+<id-char> ::=  <alpha> | <digit> | '-'
+
+<terminal> ::= ''' <char-literal> '''
+             | '"' <string-literal> '"'
+             | <literal>
+
+<char-literal> ::= <char> | '"' | <escape>
+<char> ::= '`' | '-' | '=' | '[' | ']' | ';' | ''' | ',' | '.' | '/' | '!' | '~'
+         | '_' | '+' | '{' | '}' | '|' | ':' | '<' | '>' | '?' | '@' | '#' | '$'
+         | '%' | '^' | '&' | '*' | '(' | ')' | ' '
+         | <alpha> | <digit>
+
+<string-literal> ::= <string-char> <string-literal>
+                   | ""
+<string-char> ::= <char> | '\' <string-escape>
+<escape> ::= '\' <escape-char>
+<escape-char> ::= '\' | <alpha>  ; validity of escape sequences is not checked
+<string-escape> ::= <escape-char> | '"'  ; only strings need to escape the double quote mark
+
+<literal> ::= <alphanum> <chars>
+<alphanum> ::= <alpha> | <digit>
+<chars> ::= <alphanum> <chars>
+          | ""
+
+<alpha> ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K'
+          | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V'
+          | 'W' | 'X' | 'Y' | 'Z' | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
+          | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r'
+          | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+<digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
