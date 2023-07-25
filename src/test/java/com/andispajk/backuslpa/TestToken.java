@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 public class TestToken {
     @Test
     public void testGetters() {
-        Token tk = new Token("term", TkType.IDENT, 0);
+        Token tk = new Token("term", TkType.EBNF_IDENT, 0);
         assertEquals(tk.lexeme(), "term");
-        assertEquals(tk.type(), TkType.IDENT);
+        assertEquals(tk.type(), TkType.EBNF_IDENT);
         assertEquals(tk.startPos(), 0);
         Token tk2 = new Token("}", TkType.RCURLY, 17);
         assertEquals(tk2.lexeme(), "}");
