@@ -13,21 +13,39 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class Lexer {
+    private String fileName;
     private StringBuilder source;
     private int sourceLen;
     private int currPos;
     private int lineNum;
+    private int beginningOfLine;
     private boolean endOfFile;
 
     /* Lexer()
-        @inputFile      the file containing a grammar
 
-        Construct a Lexer object that will read @inputFile and lexically analyze
-        it.
+        Construct a Lexer object that will read input and lexically analyze it.
     */
-    public Lexer(String inputFile) {
+    public Lexer() {
+        fileName = "";
         source = new StringBuilder();
+        sourceLen = 0;
+        currPos = 0;
+        lineNum = 0;
+        beginningOfLine = 0;
+        endOfFile = false;
+    }
+
+    /* readFile()
+        @inputFile      name of text file containing a grammar
+
+        Open a file and read its entire contents into the Lexer. Reset the old
+        values of all class variables.
+    */
+    public void readFile(String inputFile) {
         try {
+            fileName = inputFile;
+            source.setLength(0);
+
             Scanner reader = new Scanner(new File(inputFile));
             while (reader.hasNextLine()) {
                 source.append(reader.nextLine());
@@ -35,14 +53,33 @@ public class Lexer {
                 source.append('\n');
                 // then we don't have to deal with windows \r bullshit
             }
-            sourceLen = source.length();
         } catch (FileNotFoundException e) {
             System.err.printf("ERROR: could not open input file %s\n",
                               inputFile);
             System.exit(1);
         }
+
+        sourceLen = source.length();
         currPos = 0;
         lineNum = 0;
+        beginningOfLine = 0;
+        endOfFile = false;
+    }
+
+    /* readString
+        @inputString        a string
+
+        Read any string into the Lexer. Reset the old values of all class
+        variables.
+    */
+    public void readString(String inputString) {
+        fileName = "";
+        source.setLength(0);
+        source.append(inputString);
+        sourceLen = source.length();
+        currPos = 0;
+        lineNum = 0;
+        beginningOfLine = 0;
         endOfFile = false;
     }
 
@@ -60,8 +97,10 @@ public class Lexer {
 
         c = source.charAt(currPos);
         currPos++;
-        if (c == '\n')
+        if (c == '\n') {
+            beginningOfLine = currPos;
             lineNum++;
+        }
         return c;
     }
 
@@ -89,6 +128,12 @@ public class Lexer {
             nextChar();
             c = peek();
         }
+        // Why we use peek() to update loop conditions:
+        // After reading the last whitespace char, currPos increments to the
+        // char right after that whitespace. If that new char is NOT whitespace,
+        // we want to end the loop so nextChar() reads that new char at currPos!
+        // But if we end the loop by updating c with nextChar(), we'll increment
+        // currPos to the 2nd char after the last whitespace.
     }
 
     /* lex()
@@ -96,13 +141,78 @@ public class Lexer {
 
         Find the next token and return it.
     */
-    public void lex() {
+    public Token lex() {
         char c;
+        StringBuilder lexeme = new StringBuilder();
+        int lexemeStart;
+        LexerState state;
+
+        // get next meaningful character
         trimLeft();
-        while (!endOfFile) {
-            c = nextChar();
-            System.out.printf("%c", c);
-        }
-        System.out.printf("%d lines\n", lineNum);
+        lexemeStart = currPos;
+        c = nextChar();
+
+        if (endOfFile)
+            return new Token("", TkType.EOF, currPos);
+
+        state = LexerState.START;
+        while (!endOfFile && state != LexerState.ACCEPT) {
+            if (state == LexerState.START) {
+                lexeme.append(c);
+                if (Character.isLetterOrDigit(c) || c == '_')
+                    state = LexerState.EBNF_CHAR;
+                switch (c) {
+                case '<':
+                    state = LexerState.LCHEVRON;
+                    break;
+                case '\'':
+                    state = LexerState.BEGIN_CHAR;
+                    break;
+                case '"':
+                    state = LexerState.BEGIN_STRING;
+                    break;
+                case '=':
+                    return new Token("=", TkType.EQUAL, lexemeStart);
+                case ':':
+                    state = LexerState.DERIVES1;
+                    break;
+                case ')':
+                    return new Token(")", TkType.RPAREN, lexemeStart);
+                case '{':
+                    return new Token("{", TkType.LCURLY, lexemeStart);
+                case '}':
+                    return new Token("}", TkType.RCURLY, lexemeStart);
+                case '[':
+                    return new Token("[", TkType.LBRACKET, lexemeStart);
+                case ']':
+                    return new Token("]", TkType.RBRACKET, lexemeStart);
+                case '|':
+                    return new Token("|", TkType.PIPE, lexemeStart);
+                case '*':
+                    return new Token("*", TkType.STAR, lexemeStart);
+                case '+':
+                    return new Token("+", TkType.PLUS, lexemeStart);
+                case '?':
+                    return new Token("?", TkType.QUESTION, lexemeStart);
+                case '\n':
+                    return new Token("\n", TkType.NEWLINE, lexemeStart);
+                case '.':
+                    state = LexerState.DIRECTIVE;
+                    break;
+                case '\0':
+                    return new Token("", TkType.EOF, currPos);
+                }
+
+                // comments are not lexemes, so undo lexeme.append(c)
+                if (c == ';') {
+                    state = LexerState.INLINE_COMMENT;
+                    lexeme.deleteCharAt(0);
+                } else if (c == '(') {
+                    state = LexerState.MAYBE_LPAREN;
+                    lexeme.deleteCharAt(0);
+                }
+            }
+        } // endwhile
+        return new Token(lexeme.toString(), TkType.ILLEGAL, lexemeStart);
     }
 }

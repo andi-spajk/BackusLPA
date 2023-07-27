@@ -13,7 +13,12 @@ public class Main {
             System.out.println("invalid number of cmdline args");
             System.exit(1);
         }
-        Lexer lexer = new Lexer(args[0]);
-        lexer.lex();
+        Lexer lexer = new Lexer();
+        lexer.readFile(args[0]);
+        Token tk = lexer.lex();
+        while (tk.type() != TkType.EOF) {
+            tk.print();
+            tk = lexer.lex();
+        }
     }
 }

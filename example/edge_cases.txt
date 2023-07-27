@@ -1,0 +1,8 @@
+   
+.EBNF
+
+rule = terminal
+
+     | terminal2
+ 
+rule2 = "hi"

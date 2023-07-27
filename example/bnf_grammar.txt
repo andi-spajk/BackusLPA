@@ -1,3 +1,5 @@
+
+
     .BNF
 
 <grammar> ::= <productions>
@@ -12,9 +14,10 @@
             | ""
 <alts> ::= <alt> <alts>
          | ""
-<alt> ::= <newline> '|' <rhs>
+<alt> ::= '\n' <newlines> '|' <rhs>
         | '|' <rhs>
-<newline> ::= '\n' | "\r\n"
+<newlines> ::= '\n' <newlines>
+             | ""
 
 <non-terminal> ::= '<' <identifier> '>'
 <identifier> ::= <id-char> <id-chars>

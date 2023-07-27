@@ -35,4 +35,11 @@ public class Token {
     public int startPos() {
         return startPos;
     }
+
+    public void print() {
+        if (type == TkType.NEWLINE)
+            System.out.printf("%11s:\n", "NEWLINE");
+        else
+            System.out.printf("%11s: |%s|\n", type.toString(), lexeme);
+    }
 }

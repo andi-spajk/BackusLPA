@@ -25,6 +25,8 @@ public enum TkType {
     QUESTION,   // ?
     BNF_MODE,
     EBNF_MODE,
+    NEWLINE,    // \n
+                // windows \r is handled under the hood, user need not worry
     ILLEGAL,    // illegal tokens will have garbage lexemes that shouldn't be
                 // accessed
     EOF

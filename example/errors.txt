@@ -1,0 +1,8 @@
+.BNF
+
+<rule> ::= <nonterminal>
+         | <bad> ::= <oops>
+
+<rule2> ::= <nonterminal2>
+          |
+<rule3> ::= <oopsie-woopsie>

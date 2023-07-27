@@ -3,7 +3,7 @@
 grammar = {production}
 
 production = nonterminal "=" rhs
-rhs = term {term} {[newline] '|' term {term}}
+rhs = term {term} {{'\n'} '|' term {term}}
 term = factor
      | '(' rhs ')' [modifier]
      | '{' rhs '}'
@@ -11,7 +11,6 @@ term = factor
 factor = symbol [modifier]
 modifier = '*' | '+' | '?'
 symbol = terminal | nonterminal
-newline = '\n' | "\r\n"
 
 nonterminal = alpha {alpha | digit | '_'}
 
