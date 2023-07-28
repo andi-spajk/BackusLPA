@@ -28,15 +28,18 @@
 <terminal> ::= ''' <char-literal> '''
              | '"' <string-literal> '"'
 
-<char-literal> ::= <char> | '"'
+<char-literal> ::= <char> | '"' | <char-escape>
+<char-escape> ::= "\'" | <escape>
 
 <string-literal> ::= <string-char> <string-literal>
                    | ""
-<string-char> ::= <char> | "\\" | "\""
+<string-char> ::= <char> | "'" | <string-escape>
+<string-escape> ::= "\"" | <escape>
 
-<char> ::= '`' | '-' | '=' | '[' | ']' | ';' | ''' | ',' | '.' | '/' | '!' | '~'
-         | '_' | '+' | '{' | '}' | '|' | ':' | '<' | '>' | '?' | '@' | '#' | '$'
-         | '%' | '^' | '&' | '*' | '(' | ')' | ' '
+<escape> ::= "\\" | "\n" | "\r" | "\t" | "\b" | "\f" | "\v"
+<char> ::= '`' | '-' | '=' | '[' | ']' | ';' | ',' | '.' | '/' | '!' | '~' | '_'
+         | '+' | '{' | '}' | '|' | ':' | '<' | '>' | '?' | '@' | '#' | '$' | '%'
+         | '^' | '&' | '*' | '(' | ')' | ' '
          | <alpha> | <digit>
 
 <alpha> ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K'

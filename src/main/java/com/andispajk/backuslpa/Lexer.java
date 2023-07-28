@@ -14,7 +14,7 @@ import java.util.Scanner;
 
 public class Lexer {
     private String fileName;
-    private StringBuilder source;
+    private final StringBuilder source;
     private int sourceLen;
     private int currPos;
     private int lineNum;
@@ -146,6 +146,7 @@ public class Lexer {
         StringBuilder lexeme = new StringBuilder();
         int lexemeStart;
         LexerState state;
+        TkType type = TkType.ILLEGAL;
 
         // get next meaningful character
         trimLeft();
@@ -211,8 +212,57 @@ public class Lexer {
                     state = LexerState.MAYBE_LPAREN;
                     lexeme.deleteCharAt(0);
                 }
+            } else if (state == LexerState.LCHEVRON) {
+                c = nextChar();
+                if (Character.isLetterOrDigit(c) || c == '-') {
+                    state = LexerState.BNF_CHAR;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal nonterminal character");
+                    //System.exit(1);
+                    break;
+                }
+            } else if (state == LexerState.BNF_CHAR) {
+                c = nextChar();
+                if (Character.isLetterOrDigit(c) || c == '-') {
+                    lexeme.append(c);
+                } else if (c == '>') {
+                    state = LexerState.ACCEPT;
+                    type = TkType.BNF_IDENT;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal nonterminal character");
+                    //System.exit(1);
+                    break;
+                }
             }
         } // endwhile
-        return new Token(lexeme.toString(), TkType.ILLEGAL, lexemeStart);
+        return new Token(lexeme.toString(), type, lexemeStart);
+    }
+
+    private void printCurrLine() {
+        int i = beginningOfLine;
+        char c = '\0';
+        while (c != '\n' && i < sourceLen) {
+            c = source.charAt(i);
+            System.out.print(c);
+            i++;
+        }
+        System.out.print("\n");
+    }
+
+    public void error(int errorPos, String errorMsg) {
+        System.out.printf("%s:%d:%d: error: %s\n", fileName, lineNum+1,
+                          errorPos, errorMsg);
+        System.out.printf("    %-4d|", lineNum+1);
+        printCurrLine();
+
+        System.out.print("        |");
+        StringBuilder offset = new StringBuilder();
+        // TODO: 8-wide tab alignment
+        for (int i = 0; i < errorPos; i++)
+            offset.append(" ");
+        System.out.print(offset.toString());
+        System.out.print("^\n\n");
     }
 }

@@ -1,9 +1,9 @@
 # BackusLPA
 
-BackusLPA (Backus-Naur Form Lexer, Parser, and Analyzer) is a program that
-reads and checks formal grammars (specified in Backus-Naur Form or Extended
-Backus-Naur Form) for syntactic correctness. It also verifies LL(1) and LR(1)
-grammars.
+BackusLPA (_**Backus**-Naur Form **L**exer, **P**arser, and **A**nalyzer_) is a
+program that reads and checks formal grammars for syntactic correctness. It also
+verifies if they are LL(1) or LR(1) grammars. Supplied grammars must be
+specified in Backus-Naur Form or Extended Backus-Naur Form.
 
 This project is still a work in progress.
 
@@ -32,6 +32,9 @@ slate.
 
 
 # Usage
-Write your BNF/EBNF grammars in a `.txt` file. Then use the command
-`$ BackusLPA.bat grammar.txt` to run the program with your specified grammar
-file. Some sample grammars are provided in `examples/`.
+Write your BNF/EBNF grammar in a `.txt` file.
+
+Then use the command `$ BackusLPA.bat grammar.txt` to run the program with your
+specified grammar file.
+
+Some sample grammars are provided in `examples/`.

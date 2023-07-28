@@ -2,13 +2,24 @@ package com.andispajk.backuslpa;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
 
 public class TestLexer {
+    private Lexer lexer;
+    private Token tk;
+
+    @BeforeEach
+    public void setUp() {
+        lexer = new Lexer();
+    }
+
     @Test
     public void testLexSingleChars() {
-        Lexer lexer = new Lexer();
-        Token tk;
         int i;
         String input;
 
@@ -54,6 +65,45 @@ public class TestLexer {
                 assertEquals(0, tk.lexeme().length());
             }
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " ", "    ", "\t  ", " \t   "})
+    public void testEOF(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+        // an EOF token's startPos and lexeme should be disregarded by the user
+    }
+
+    @ParameterizedTest
+    @CsvSource(quoteCharacter = '"', textBlock = """
+        "<a>",                      3,  0
+        "  <->",                    3,  2
+        "\t<identifier>",           12, 1
+        "<many1-words2-here3>   ",  20, 0
+        """)
+    public void testLexBNFident(String input, int len, int startPos) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.BNF_IDENT, tk.type());
+        assertEquals(input.trim(), tk.lexeme());
+        assertEquals(len, tk.lexeme().length());
+        assertEquals(startPos, tk.startPos());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "<error",
+        "<>",
+        "<!@#$%>",
+        "<bad\t  ",
+        "<   >"
+    })
+    public void testLexBNFidentError(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
     }
 
 }

@@ -16,12 +16,17 @@ nonterminal = alpha {alpha | digit | '_'}
 
 terminal = ''' char_literal '''
          | '"' {string_char} '"'
-char_literal = char | '"'
-string_char = char | "\\" | "\""
 
-char = '`' | '-' | '=' | '[' | ']' | ';' | ''' | ',' | '.' | '/' | '!' | '~'
-     | '_' | '+' | '{' | '}' | '|' | ':' | '<' | '>' | '?' | '@' | '#' | '$'
-     | '%' | '^' | '&' | '*' | '(' | ')' | ' '
+char_literal = char | '"' | char_escape
+char_escape = "\'" | escape
+
+string_char = char | "'" | string_escape
+string_escape = "\"" | escape
+
+escape = "\\" | "\n" | "\r" | "\t" | "\b" | "\f" | "\v"
+char = '`' | '-' | '=' | '[' | ']' | ';' | ',' | '.' | '/' | '!' | '~' | '_'
+     | '+' | '{' | '}' | '|' | ':' | '<' | '>' | '?' | '@' | '#' | '$' | '%'
+     | '^' | '&' | '*' | '(' | ')' | ' '
      | alpha | digit
 alpha = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L'
       | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X'

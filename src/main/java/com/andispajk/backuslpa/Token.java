@@ -7,9 +7,9 @@ Represent the tokens found in BNF/EBNF grammar specifications.
 package com.andispajk.backuslpa;
 
 public class Token {
-    private String lexeme;
-    private TkType type;
-    private int startPos;
+    private final String lexeme;
+    private final TkType type;
+    private final int startPos;
 
     /* Token()
         @lexeme      string representation of the token
@@ -38,7 +38,7 @@ public class Token {
 
     public void print() {
         if (type == TkType.NEWLINE)
-            System.out.printf("%11s:\n", "NEWLINE");
+            System.out.print("    NEWLINE:\n");
         else
             System.out.printf("%11s: |%s|\n", type.toString(), lexeme);
     }
