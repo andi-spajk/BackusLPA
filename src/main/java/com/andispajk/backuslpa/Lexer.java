@@ -212,6 +212,10 @@ public class Lexer {
                     state = LexerState.MAYBE_LPAREN;
                     lexeme.deleteCharAt(0);
                 }
+
+                // no state transition, ie error
+                if (state == LexerState.START)
+                    break;
             } else if (state == LexerState.LCHEVRON) {
                 c = nextChar();
                 if (Character.isLetterOrDigit(c) || c == '-') {
@@ -234,6 +238,16 @@ public class Lexer {
                     error(currPos-1, "illegal nonterminal character");
                     //System.exit(1);
                     break;
+                }
+            } else if (state == LexerState.EBNF_CHAR) {
+                c = peek();
+                if (Character.isLetterOrDigit(c) || c == '_') {
+                    // stay in this state
+                    lexeme.append(c);
+                    nextChar();
+                } else {
+                    state = LexerState.ACCEPT;
+                    type = TkType.EBNF_IDENT;
                 }
             }
         } // endwhile
@@ -262,7 +276,8 @@ public class Lexer {
         // TODO: 8-wide tab alignment
         for (int i = 0; i < errorPos; i++)
             offset.append(" ");
-        System.out.print(offset.toString());
+        // print(StringBuilder) auto-calls .toString()
+        System.out.print(offset);
         System.out.print("^\n\n");
     }
 }

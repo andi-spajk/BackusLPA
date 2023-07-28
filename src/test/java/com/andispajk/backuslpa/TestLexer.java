@@ -68,7 +68,12 @@ public class TestLexer {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "    ", "\t  ", " \t   "})
+    @ValueSource(strings = {
+        "",
+        " ",
+        "    ",
+        "\t  ",
+        " \t   "})
     public void testEOF(String input) {
         lexer.readString(input);
         tk = lexer.lex();
@@ -80,13 +85,14 @@ public class TestLexer {
     @CsvSource(quoteCharacter = '"', textBlock = """
         "<a>",                      3,  0
         "  <->",                    3,  2
-        "\t<identifier>",           12, 1
-        "<many1-words2-here3>   ",  20, 0
+        "\t<iDeNtIfIeR>",           12, 1
+        "<many1-WORDS2-here3>   ",  20, 0
         """)
     public void testLexBNFident(String input, int len, int startPos) {
         lexer.readString(input);
         tk = lexer.lex();
         assertEquals(TkType.BNF_IDENT, tk.type());
+        // assertEquals calls .equals() so string comparison is safe
         assertEquals(input.trim(), tk.lexeme());
         assertEquals(len, tk.lexeme().length());
         assertEquals(startPos, tk.startPos());
@@ -94,9 +100,9 @@ public class TestLexer {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "<error",
+        " <error",
         "<>",
-        "<!@#$%>",
+        "    <!@#$%>",
         "<bad\t  ",
         "<   >"
     })
@@ -105,5 +111,43 @@ public class TestLexer {
         tk = lexer.lex();
         assertEquals(TkType.ILLEGAL, tk.type());
     }
+    // MAYBE TODO: arrow alignment on " <error" and "<bad\t  " is weird
+    // the last nextChar() detecs EOF so currPos is 1 after the last char 'r'
+    // the last nextChar() detects \t so currPos is 1 after the \t
+    // so the call to error() prints arrow under 'r' and '\t'
+    // looks inconsistent but this is low priority
+    // writing this so here so i don't forget in the future if i do decide to
+    // fix this
 
+    @ParameterizedTest
+    @CsvSource(quoteCharacter = '"', textBlock = """
+        "xyz",              3,  0
+        " \t_\t ",          1,  2
+        "      abc_DEF123", 10, 6
+        "\tq0q1  ",         4,  1
+        "1digitasthefirstcharwow", 23, 0
+        """)
+    public void testLexEBNFident(String input, int len, int startPos) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.EBNF_IDENT, tk.type());
+        assertEquals(input.trim(), tk.lexeme());
+        assertEquals(len, tk.lexeme().length());
+        assertEquals(startPos, tk.startPos());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "error>",
+        "  BAD-CHARS",
+        "\tlol@#$%",
+        "_____!"
+        })
+    public void testLexEBNFerror(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.EBNF_IDENT, tk.type());
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
 }
