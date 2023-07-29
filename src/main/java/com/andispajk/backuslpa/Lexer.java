@@ -341,7 +341,14 @@ public class Lexer {
                     state = LexerState.DERIVES2;
                     lexeme.append(c);
                 } else {
-                    error(currPos-1, "expected ':'");
+                    String errorMsg;
+                    if (c == '\n')
+                        errorMsg = "unexpected \\n";
+                    else if (c == '\t')
+                        errorMsg = "unexpected \\t";
+                    else
+                        errorMsg = "expected :";
+                    error(currPos-1, errorMsg);
                     break;
                 }
             } else if (state == LexerState.DERIVES2) {
@@ -351,7 +358,14 @@ public class Lexer {
                     type = TkType.DERIVES;
                     lexeme.append(c);
                 } else {
-                    error(currPos-1, "expected '='");
+                    String errorMsg;
+                    if (c == '\n')
+                        errorMsg = "unexpected \\n";
+                    else if (c == '\t')
+                        errorMsg = "unexpected \\t";
+                    else
+                        errorMsg = "expected =";
+                    error(currPos-1, errorMsg);
                     break;
                 }
             } else if (state == LexerState.MAYBE_LPAREN) {

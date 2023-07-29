@@ -328,9 +328,11 @@ public class TestLexer {
     @ParameterizedTest
     @ValueSource(strings = {
         ":=",
+        ":\t=",
         "    :=:",
         ":::=",
-        "::\n="     // error msg looks fucked up but that's arguably unimportant
+        "::\t=",
+        "::\n="
     })
     @Order(15)
     public void testLexDerivesError(String input) {

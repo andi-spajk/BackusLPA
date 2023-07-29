@@ -25,23 +25,23 @@
              | ""
 <id-char> ::=  <alpha> | <digit> | '-'
 
-<terminal> ::= ''' <char-literal> '''
+<terminal> ::= '\'' <char-literal> '\''
              | '"' <string-literal> '"'
 
 <char-literal> ::= <char> | '"' | <char-escape>
-<char-escape> ::= "\'" | <escape>
+<char-escape> ::= "\\'" | <escape>
 
 <string-literal> ::= <string-char> <string-literal>
                    | ""
 <string-char> ::= <char> | "'" | <string-escape>
-<string-escape> ::= "\"" | <escape>
+<string-escape> ::= "\\\"" | <escape>
 
 <escape> ::= "\\" | "\n" | "\r" | "\t" | "\b" | "\f" | "\v"
 <char> ::= '`' | '-' | '=' | '[' | ']' | ';' | ',' | '.' | '/' | '!' | '~' | '_'
          | '+' | '{' | '}' | '|' | ':' | '<' | '>' | '?' | '@' | '#' | '$' | '%'
          | '^' | '&' | '*' | '(' | ')' | ' '
          | <alpha> | <digit>
-
+; char doesn't contain single quote, double quote, or backslash
 <alpha> ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K'
           | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V'
           | 'W' | 'X' | 'Y' | 'Z' | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'

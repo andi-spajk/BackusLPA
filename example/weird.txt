@@ -1,0 +1,3 @@
+.EBNF
+
+rule = [watch ((* this )*)lol)]+  ; comment
