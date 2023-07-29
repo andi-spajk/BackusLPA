@@ -3,13 +3,17 @@ package com.andispajk.backuslpa;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 // TODO: some error arrows are currently misaligned since tab widths aren't
 // handled in error()
+@TestMethodOrder(OrderAnnotation.class)
 public class TestLexer {
     private Lexer lexer;
     private Token tk;
@@ -20,6 +24,7 @@ public class TestLexer {
     }
 
     @Test
+    @Order(1)
     public void testLexSingleChars() {
         int i;
         String input;
@@ -75,6 +80,7 @@ public class TestLexer {
         "    ",
         "\t  ",
         " \t   "})
+    @Order(2)
     public void testEOF(String input) {
         lexer.readString(input);
         tk = lexer.lex();
@@ -88,6 +94,7 @@ public class TestLexer {
         "     &",
         "\t@"
     })
+    @Order(3)
     public void testLexStartError(String input) {
         lexer.readString(input);
         tk = lexer.lex();
@@ -101,6 +108,7 @@ public class TestLexer {
         "\t<iDeNtIfIeR>",           12, 1
         "<many1-WORDS2-here3>   ",  20, 0
         """)
+    @Order(4)
     public void testLexBNFident(String input, int len, int startPos) {
         lexer.readString(input);
         tk = lexer.lex();
@@ -121,6 +129,7 @@ public class TestLexer {
         "<bad\t  ",
         "<   >"
     })
+    @Order(5)
     public void testLexBNFidentError(String input) {
         lexer.readString(input);
         tk = lexer.lex();
@@ -143,6 +152,7 @@ public class TestLexer {
         "\tq0q1  ",         4,  1
         "1digitasthefirstcharwow", 23, 0
         """)
+    @Order(6)
     public void testLexEBNFident(String input, int len, int startPos) {
         lexer.readString(input);
         tk = lexer.lex();
@@ -161,6 +171,7 @@ public class TestLexer {
         "\tlol@#$%",
         "_____!"
         })
+    @Order(7)
     public void testLexEBNFerror(String input) {
         lexer.readString(input);
         tk = lexer.lex();
@@ -179,42 +190,123 @@ public class TestLexer {
         " '\\\\'",  "\\\\"
         "'\\''",    "\\'"
         """)
-    // last 2 are '\\' and '\''
+    /* from user's perspective:
+        ' '
+        't'
+        '<'
+        '('
+        '\n'
+        '\\'
+        '\''
+    */
+    @Order(8)
     public void testLexChar(String input, String charContent) {
         lexer.readString(input);
         tk = lexer.lex();
+        String lexeme = tk.lexeme();
+
         assertEquals(TkType.CHAR, tk.type());
-        assertEquals(charContent, tk.lexeme().substring(1,tk.lexeme().length()-1));
+        assertEquals(charContent, lexeme.substring(1,lexeme.length()-1));
         tk = lexer.lex();
         assertEquals(TkType.EOF, tk.type());
     }
 
     @Test
+    @Order(9)
     public void testLexWeirdChar() {
         // "'\"'" breaks when using csv block quote in testLexChar
         // "'"'" also fails
         // both cause an infinite loop, so just test it separately
         lexer.readString("'\"'");
         tk = lexer.lex();
+        String lexeme = tk.lexeme();
+
         assertEquals(TkType.CHAR, tk.type());
-        assertEquals("\"", tk.lexeme().substring(1,tk.lexeme().length()-1));
+        assertEquals("\"", lexeme.substring(1,lexeme.length()-1));
         tk = lexer.lex();
         assertEquals(TkType.EOF, tk.type());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "''",
-        "'  '",
-        "'|  '",
-        "'\n'",
-        "    '\\q'",
-        "'\\\"'"
+    @ValueSource(strings = {    // from user's perspective:
+        "''",                   // ''
+        "'  '",                 // '  '
+        "'|  '",                // '|  '
+        "'\n'",                 /* '
+                                   '
+                                */
+        "    '\\q'",            // '\q'
+        "'\\\"'",               // '\"'
+        "'\t'"                  // '        ' ...well you get the idea
         })
+    @Order(10)
     public void testLexCharError(String input) {
         lexer.readString(input);
         tk = lexer.lex();
         assertEquals(TkType.ILLEGAL, tk.type());
     }
 
+    @Test
+    @Order(11)
+    public void testLexString() {
+        String[] input = {                  // from user's perspective:
+            "\"\"",                         // ""
+            "\"\\\"\"",                     // "\""
+            "\"abcXYZ\"",                   // "abcXYZ"
+            "\"hello world\\n\"",           // "hello world\n"
+            "\"!@#$\\t^&*()\"",             // "!@#$\t^%&*()"
+            "\"tabs are \\\"\\\\t\\\"\""    // "tabs are \"\\t\""
+        };
+        String[] contents = {
+            "",
+            "\\\"",
+            "abcXYZ",
+            "hello world\\n",
+            "!@#$\\t^&*()",
+            "tabs are \\\"\\\\t\\\""
+        };
+        String lexeme;
+        for (int i = 0; i < input.length; i++) {
+            lexer.readString(input[i]);
+            tk = lexer.lex();
+            lexeme = tk.lexeme();
+            assertEquals(contents[i], lexeme.substring(1,lexeme.length()-1));
+            tk = lexer.lex();
+            assertEquals(TkType.EOF, tk.type());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {    // from user's perspective:
+        "\"\n\"",               /* "
+                                   "
+                                */
+        "\"illegal: \\w\"",     // "illegal: \w"
+        "\"\t\"",               // "        " ...you get the idea
+        "\"\\'\""               // "\'"
+    })
+    @Order(12)
+    public void testLexStringError(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
+
+    @Test
+    @Order(13)
+    public void testLexTripleDoubleQuote() {
+        lexer.readString("\"\"\"");
+        tk = lexer.lex();
+        assertEquals(TkType.STRING, tk.type());
+        assertEquals("\"\"", tk.lexeme());
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+
+        lexer.readString("\">\"<\"");
+        tk = lexer.lex();
+        assertEquals(TkType.STRING, tk.type());
+        assertEquals("\">\"", tk.lexeme());
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
 }

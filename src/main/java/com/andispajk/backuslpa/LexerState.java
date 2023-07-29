@@ -14,7 +14,7 @@ public enum LexerState {
     BEGIN_CHAR,     // 4
     CHAR_ESCAPE,    // 5
     END_CHAR,       // 6
-    BEGIN_STRING,   // 7
+    IN_STRING,      // 7
     STRING_ESCAPE,  // 8
     DERIVES1,       // 9
     DERIVES2,       // 10

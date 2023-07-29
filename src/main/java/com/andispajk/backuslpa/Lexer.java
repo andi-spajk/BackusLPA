@@ -170,7 +170,7 @@ public class Lexer {
                     state = LexerState.BEGIN_CHAR;
                     break;
                 case '"':
-                    state = LexerState.BEGIN_STRING;
+                    state = LexerState.IN_STRING;
                     break;
                 case '=':
                     return new Token("=", TkType.EQUAL, lexemeStart);
@@ -295,6 +295,43 @@ public class Lexer {
                     lexeme.append(c);
                 } else {
                     error(currPos-1, "char literal size exceeds 1 char");
+                    break;
+                }
+            } else if (state == LexerState.IN_STRING) {
+                c = nextChar();
+                if (c == '"') {
+                    state = LexerState.ACCEPT;
+                    type = TkType.STRING;
+                    lexeme.append(c);
+                } else if (c == '\\') {
+                    state = LexerState.STRING_ESCAPE;
+                    lexeme.append(c);
+                } else if (c >= 32 && c <= 126) {
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal string literal");
+                    break;
+                }
+            } else if (state == LexerState.STRING_ESCAPE) {
+                c = nextChar();
+                switch (c) {
+                case '\\':
+                case '"':
+                case 'n':
+                case 'r':
+                case 't':
+                case 'b':
+                case 'f':
+                case 'v':
+                    state = LexerState.IN_STRING;
+                    lexeme.append(c);
+                    break;
+                }
+                // no state transition happened
+                if (state != LexerState.IN_STRING) {
+                    // not in a default case because we can't break out of the
+                    // while loop if we're in a switch
+                    error(currPos-1, "illegal string escape sequence");
                     break;
                 }
             }

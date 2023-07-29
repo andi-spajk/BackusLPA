@@ -23,11 +23,11 @@ public enum TkType {
     STAR,       // *
     PLUS,       // +
     QUESTION,   // ?
-    BNF_MODE,
-    EBNF_MODE,
+    BNF_MODE,   // .BNF
+    EBNF_MODE,  // .EBNF
     NEWLINE,    // \n
                 // windows \r is handled under the hood, user need not worry
     ILLEGAL,    // illegal tokens will have garbage lexemes that shouldn't be
-                // accessed
+                // used
     EOF
 }
