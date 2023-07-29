@@ -10,7 +10,6 @@ package com.andispajk.backuslpa;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import java.sql.SQLXML;
 import java.util.Scanner;
 
 public class Lexer {
