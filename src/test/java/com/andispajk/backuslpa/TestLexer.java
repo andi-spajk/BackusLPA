@@ -175,8 +175,9 @@ public class TestLexer {
         "'t'", "t"
         "\t'<'", "<"
         "     '('", "("
+        "'\\n'",    "\\n"
         " '\\\\'",  "\\\\"
-        "'\\''",   "\\'"
+        "'\\''",    "\\'"
         """)
     // last 2 are '\\' and '\''
     public void testLexChar(String input, String charContent) {
@@ -206,8 +207,9 @@ public class TestLexer {
         "''",
         "'  '",
         "'|  '",
-        "'\\n'",    // '\n'
-        "'\n'"
+        "'\n'",
+        "    '\\q'",
+        "'\\\"'"
         })
     public void testLexCharError(String input) {
         lexer.readString(input);

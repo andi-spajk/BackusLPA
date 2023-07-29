@@ -267,11 +267,24 @@ public class Lexer {
                 }
             } else if (state == LexerState.CHAR_ESCAPE) {
                 c = nextChar();
-                if (c == '\\' || c == '\'') {
+                switch (c) {
+                case '\\':
+                case '\'':
+                case 'n':
+                case 'r':
+                case 't':
+                case 'b':
+                case 'f':
+                case 'v':
                     state = LexerState.END_CHAR;
                     lexeme.append(c);
-                } else {
-                    error(currPos-1, "illegal char literal");
+                    break;
+                }
+                // no state transition happened
+                if (state != LexerState.END_CHAR) {
+                    // not in a default case because we can't break out of the
+                    // while loop if we're in a switch
+                    error(currPos-1, "illegal char escape sequence");
                     break;
                 }
             } else if (state == LexerState.END_CHAR) {
