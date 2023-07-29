@@ -41,7 +41,7 @@ public class TestLexer {
             tk = lexer.lex();
             // verify type, start position, and lexeme
             assertEquals(expectedTypes[i], tk.type());
-            // no spaces/tabs so we can use i as expected startPos:
+            // no spaces/tabs, so we can use i as expected startPos:
             assertEquals(i, tk.startPos());
             if (tk.type() != TkType.EOF) {
                 assertEquals(1, tk.lexeme().length());
@@ -306,6 +306,36 @@ public class TestLexer {
         tk = lexer.lex();
         assertEquals(TkType.STRING, tk.type());
         assertEquals("\">\"", tk.lexeme());
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "::=",
+        "\t::=",
+        "     ::=    "
+    })
+    @Order(14)
+    public void testLexDerives(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.DERIVES, tk.type());
+        assertEquals("::=", tk.lexeme());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        ":=",
+        "    :=:",
+        ":::=",
+        "::\n="     // error msg looks fucked up but that's arguably unimportant
+    })
+    @Order(15)
+    public void testLexDerivesError(String input) {
+        lexer.readString(input);
         tk = lexer.lex();
         assertEquals(TkType.ILLEGAL, tk.type());
     }

@@ -334,6 +334,25 @@ public class Lexer {
                     error(currPos-1, "illegal string escape sequence");
                     break;
                 }
+            } else if (state == LexerState.DERIVES1) {
+                c = nextChar();
+                if (c == ':') {
+                    state = LexerState.DERIVES2;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "expected ':'");
+                    break;
+                }
+            } else if (state == LexerState.DERIVES2) {
+                c = nextChar();
+                if (c == '=') {
+                    state = LexerState.ACCEPT;
+                    type = TkType.DERIVES;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "expected '='");
+                    break;
+                }
             }
         } // endwhile
         return new Token(lexeme.toString(), type, lexemeStart);
