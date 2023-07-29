@@ -1,7 +1,6 @@
 package com.andispajk.backuslpa;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -12,8 +11,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-// TODO: some error arrows are currently misaligned since tab widths aren't
-// handled in error()
 @TestMethodOrder(OrderAnnotation.class)
 public class TestLexer {
     private Lexer lexer;
@@ -128,7 +125,8 @@ public class TestLexer {
         "<>",
         "    <!@#$%>",
         "<bad\t  ",
-        "<   >"
+        "<   >",
+        "<uhoh\n"
     })
     @Order(5)
     public void testLexBNFidentError(String input) {
@@ -388,6 +386,10 @@ public class TestLexer {
 
     @ParameterizedTest
     @ValueSource(strings = {
+        "(*",
+        "(*  ",
+        "(*\n",
+        "(*\n ",
         "(**",
         "(**\n",
         "(**\n ",
@@ -435,7 +437,7 @@ public class TestLexer {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        ".section text",
+        ".DEFINE pattern $2000",
         "\t\t.ORG\t$1000",
         ".EBNtrolled"
     })

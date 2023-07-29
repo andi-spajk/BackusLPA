@@ -380,6 +380,9 @@ public class Lexer {
                     trimLeft();
                     lexemeStart = currPos;
                     c = nextChar();
+                } else if (c == '\0') {
+                    error(currPos-1, "unterminated comment");
+                    break;
                 } else if (c != '*') {
                     state = LexerState.BEGIN_COMMENT;
                 } // else c == '*' so cycle in this state
@@ -456,18 +459,12 @@ public class Lexer {
 
     public void error(int errorPos, String errorMsg) {
         int gap = errorPos-beginningOfLine;
-        // TODO: print errors that occur on newline chars
         if (gap == -1) {
-            // we usually pass in currPos-1 so:
-            // currPos-1-beginningOfLine == -1
-            // currPos-beginningOfLine == 0
-            // currPos == beginningOfLine
-            // so the error is at a newline char
-            // this occurs when an unterminated comment has newlines in it
-            gap++;
-            // we cannot print previous line since the newline has been consumed
-            // beginningOfLine was updated, previous value is not retrievable
-            // least we can do is increment gap so negative index isn't printed
+            // this only happens if we have \n before EOF
+            // currPos and beginningOfLine will be equal: (index of \n) + 1
+            // but we pass in currPos-1, so errorPos-beginningOfLine = -1
+            gap = 0;
+            // increment gap so that a negative index isn't printed
         }
         System.out.printf("%s:%d:%d: error: %s\n", fileName, lineNum+1,
                           gap, errorMsg);
@@ -475,12 +472,23 @@ public class Lexer {
         printCurrLine();
 
         System.out.print("       |");
-        StringBuilder offset = new StringBuilder();
-        // TODO: 8-wide tab alignment
-        for (int i = 0; i < gap; i++)
-            offset.append(" ");
-        // print(StringBuilder) auto-calls .toString()
-        System.out.print(offset);
+        // determine number of spaces to print to ensure 8-wide tab alignment
+        int numSpaces = 0;
+        int tabAlign = 0;
+        for (int i = 0; i < gap; i++) {
+            if (tabAlign == 8)
+                tabAlign = 0;
+            if (source.charAt(beginningOfLine+i) == '\t') {
+                for (int j = 0; j < (8-tabAlign); j++)
+                    numSpaces++;
+                tabAlign = 0;
+            } else {
+                numSpaces++;
+                tabAlign++;
+            }
+        }
+
+        System.out.print(" ".repeat(numSpaces));
         System.out.print("^\n\n");
     }
 }
