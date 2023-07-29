@@ -177,6 +177,9 @@ public class Lexer {
                 case ':':
                     state = LexerState.DERIVES1;
                     break;
+                case '(':
+                    state = LexerState.MAYBE_LPAREN;
+                    break;
                 case ')':
                     return new Token(")", TkType.RPAREN, lexemeStart);
                 case '{':
@@ -200,22 +203,22 @@ public class Lexer {
                 case '.':
                     state = LexerState.DIRECTIVE;
                     break;
+                case ';':
+                    state = LexerState.INLINE_COMMENT;
+                    lexeme.deleteCharAt(0);
+                    break;
                 case '\0':
                     return new Token("", TkType.EOF, currPos);
                 }
 
-                // comments are not lexemes, so undo lexeme.append(c)
-                if (c == ';') {
-                    state = LexerState.INLINE_COMMENT;
-                    lexeme.deleteCharAt(0);
-                } else if (c == '(') {
-                    state = LexerState.MAYBE_LPAREN;
-                    lexeme.deleteCharAt(0);
-                }
-
-                // no state transition, ie error
-                if (state == LexerState.START)
+                // no state transition ocurred, ie error
+                if (state == LexerState.START) {
+                    error(currPos-1, "illegal character");
                     break;
+                }
+                // do NOT put in a default switch case
+                // switch can't check for '_' and A..Za..z0..9, so those chars
+                // would trigger a default, but they're not illegal
             } else if (state == LexerState.LCHEVRON) {
                 c = nextChar();
                 if (Character.isLetterOrDigit(c) || c == '-') {
@@ -223,7 +226,6 @@ public class Lexer {
                     lexeme.append(c);
                 } else {
                     error(currPos-1, "illegal nonterminal character");
-                    //System.exit(1);
                     break;
                 }
             } else if (state == LexerState.BNF_CHAR) {
@@ -235,8 +237,7 @@ public class Lexer {
                     type = TkType.BNF_IDENT;
                     lexeme.append(c);
                 } else {
-                    error(currPos-1, "illegal nonterminal character");
-                    //System.exit(1);
+                    error(currPos-1, "unclosed nonterminal");
                     break;
                 }
             } else if (state == LexerState.EBNF_CHAR) {
@@ -248,6 +249,40 @@ public class Lexer {
                 } else {
                     state = LexerState.ACCEPT;
                     type = TkType.EBNF_IDENT;
+                }
+            } else if (state == LexerState.BEGIN_CHAR) {
+                c = nextChar();
+                if (c == '\\') {
+                    state = LexerState.CHAR_ESCAPE;
+                    lexeme.append(c);
+                } else if (c == '\'') {
+                    error(currPos-1, "empty char literal");
+                    break;
+                } else if (c >= 32 && c <= 126) {
+                    state = LexerState.END_CHAR;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal char literal");
+                    break;
+                }
+            } else if (state == LexerState.CHAR_ESCAPE) {
+                c = nextChar();
+                if (c == '\\' || c == '\'') {
+                    state = LexerState.END_CHAR;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal char literal");
+                    break;
+                }
+            } else if (state == LexerState.END_CHAR) {
+                c = nextChar();
+                if (c == '\'') {
+                    state = LexerState.ACCEPT;
+                    type = TkType.CHAR;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "char literal size exceeds 1 char");
+                    break;
                 }
             }
         } // endwhile
@@ -268,10 +303,10 @@ public class Lexer {
     public void error(int errorPos, String errorMsg) {
         System.out.printf("%s:%d:%d: error: %s\n", fileName, lineNum+1,
                           errorPos, errorMsg);
-        System.out.printf("    %-4d|", lineNum+1);
+        System.out.printf("    %-3d|", lineNum+1);
         printCurrLine();
 
-        System.out.print("        |");
+        System.out.print("       |");
         StringBuilder offset = new StringBuilder();
         // TODO: 8-wide tab alignment
         for (int i = 0; i < errorPos; i++)

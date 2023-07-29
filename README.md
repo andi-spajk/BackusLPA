@@ -33,6 +33,10 @@ slate.
 
 # Usage
 Write your BNF/EBNF grammar in a `.txt` file.
+* One production cannot span multiple lines.
+  * Alternate productions can go onto new line(s), but the line must begin with
+  `|`.
+* The empty string is always represented by `""`.
 
 Then use the command `$ BackusLPA.bat grammar.txt` to run the program with your
 specified grammar file.

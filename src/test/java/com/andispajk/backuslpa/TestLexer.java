@@ -8,7 +8,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-
+// TODO: some error arrows are currently misaligned since tab widths aren't
+// handled in error()
 public class TestLexer {
     private Lexer lexer;
     private Token tk;
@@ -82,6 +83,18 @@ public class TestLexer {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {
+        "%",
+        "     &",
+        "\t@"
+    })
+    public void testLexStartError(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
+
+    @ParameterizedTest
     @CsvSource(quoteCharacter = '"', textBlock = """
         "<a>",                      3,  0
         "  <->",                    3,  2
@@ -96,6 +109,8 @@ public class TestLexer {
         assertEquals(input.trim(), tk.lexeme());
         assertEquals(len, tk.lexeme().length());
         assertEquals(startPos, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
     }
 
     @ParameterizedTest
@@ -112,6 +127,7 @@ public class TestLexer {
         assertEquals(TkType.ILLEGAL, tk.type());
     }
     // MAYBE TODO: arrow alignment on " <error" and "<bad\t  " is weird
+    // *****but NOT due to tab alignment*****
     // the last nextChar() detecs EOF so currPos is 1 after the last char 'r'
     // the last nextChar() detects \t so currPos is 1 after the \t
     // so the call to error() prints arrow under 'r' and '\t'
@@ -134,6 +150,8 @@ public class TestLexer {
         assertEquals(input.trim(), tk.lexeme());
         assertEquals(len, tk.lexeme().length());
         assertEquals(startPos, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
     }
 
     @ParameterizedTest
@@ -150,4 +168,51 @@ public class TestLexer {
         tk = lexer.lex();
         assertEquals(TkType.ILLEGAL, tk.type());
     }
+
+    @ParameterizedTest
+    @CsvSource(quoteCharacter = '"', textBlock = """
+        "' '", " "
+        "'t'", "t"
+        "\t'<'", "<"
+        "     '('", "("
+        " '\\\\'",  "\\\\"
+        "'\\''",   "\\'"
+        """)
+    // last 2 are '\\' and '\''
+    public void testLexChar(String input, String charContent) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.CHAR, tk.type());
+        assertEquals(charContent, tk.lexeme().substring(1,tk.lexeme().length()-1));
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @Test
+    public void testLexWeirdChar() {
+        // "'\"'" breaks when using csv block quote in testLexChar
+        // "'"'" also fails
+        // both cause an infinite loop, so just test it separately
+        lexer.readString("'\"'");
+        tk = lexer.lex();
+        assertEquals(TkType.CHAR, tk.type());
+        assertEquals("\"", tk.lexeme().substring(1,tk.lexeme().length()-1));
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "''",
+        "'  '",
+        "'|  '",
+        "'\\n'",    // '\n'
+        "'\n'"
+        })
+    public void testLexCharError(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
+
 }
