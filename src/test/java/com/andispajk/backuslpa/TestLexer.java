@@ -401,4 +401,47 @@ public class TestLexer {
         tk = lexer.lex();
         assertEquals(TkType.ILLEGAL, tk.type());
     }
+
+    @ParameterizedTest
+    @CsvSource(quoteCharacter = '"', textBlock = """
+        ".EBNF ",       0
+        "\t.EbNf   ",   1
+        """)
+    @Order(19)
+    public void testLexEBNFmode(String input, int startPos){
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.EBNF_MODE, tk.type());
+        assertEquals(startPos, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @CsvSource(quoteCharacter = '"', textBlock = """
+        " .BNF ",       1
+        "    .bNf   ",  4
+        """)
+    @Order(20)
+    public void testLexBNFmode(String input, int startPos){
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.BNF_MODE, tk.type());
+        assertEquals(startPos, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        ".section text",
+        "\t\t.ORG\t$1000",
+        ".EBNtrolled"
+    })
+    @Order(21)
+    public void testLexDirectiveError(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
 }

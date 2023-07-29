@@ -10,6 +10,7 @@ package com.andispajk.backuslpa;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import java.sql.SQLXML;
 import java.util.Scanner;
 
 public class Lexer {
@@ -381,6 +382,53 @@ public class Lexer {
                 } else if (c != '*') {
                     state = LexerState.BEGIN_COMMENT;
                 } // else c == '*' so cycle in this state
+            } else if (state == LexerState.DIRECTIVE) {
+                c = nextChar();
+                c |= 0x20;  // directives are case insensitive
+                if (c == 'e') {
+                    state = LexerState.READ_E;
+                    lexeme.append(c);
+                } else if (c == 'b') {
+                    state = LexerState.READ_B;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal directive");
+                    break;
+                }
+            } else if (state == LexerState.READ_E) {
+                c = nextChar();
+                c |= 0x20;
+                if (c == 'b') {
+                    state = LexerState.READ_B;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal directive");
+                    break;
+                }
+            } else if (state == LexerState.READ_B) {
+                c = nextChar();
+                c |= 0x20;
+                if (c == 'n') {
+                    state = LexerState.READ_N;
+                    lexeme.append(c);
+                } else {
+                    error(currPos-1, "illegal directive");
+                    break;
+                }
+            } else if (state == LexerState.READ_N) {
+                c = nextChar();
+                c |= 0x20;
+                if (c == 'f') {
+                    state = LexerState.ACCEPT;
+                    lexeme.append(c);
+                    if ((lexeme.charAt(1) | 0x20) == 'e')
+                        type = TkType.EBNF_MODE;
+                    else
+                        type = TkType.BNF_MODE;
+                } else {
+                    error(currPos-1, "illegal directive");
+                    break;
+                }
             }
         } // endwhile
         return new Token(lexeme.toString(), type, lexemeStart);
@@ -405,6 +453,7 @@ public class Lexer {
             // currPos-beginningOfLine == 0
             // currPos == beginningOfLine
             // so the error is at a newline char
+            // this occurs when an unterminated comment has newlines in it
             gap++;
             // we cannot print previous line since the newline has been consumed
             // beginningOfLine was updated, previous value is not retrievable
