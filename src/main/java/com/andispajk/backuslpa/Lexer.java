@@ -157,7 +157,7 @@ public class Lexer {
             return new Token("", TkType.EOF, currPos);
 
         state = LexerState.START;
-        while (!endOfFile && state != LexerState.ACCEPT) {
+        while (state != LexerState.ACCEPT) {
             if (state == LexerState.START) {
                 lexeme.append(c);
                 if (Character.isLetterOrDigit(c) || c == '_')
@@ -353,6 +353,34 @@ public class Lexer {
                     error(currPos-1, "expected '='");
                     break;
                 }
+            } else if (state == LexerState.MAYBE_LPAREN) {
+                c = peek();
+                if (c == '*') {
+                    state = LexerState.BEGIN_COMMENT;
+                    // delete the '(' that was appended during the start state
+                    lexeme.deleteCharAt(0);
+                } else {
+                    state = LexerState.ACCEPT;
+                    type = TkType.LPAREN;
+                }
+            } else if (state == LexerState.BEGIN_COMMENT) {
+                c = nextChar();
+                if (c == '*') {
+                    state = LexerState.END_COMMENT;
+                } else if (c == '\0') {
+                    error(currPos-1, "unterminated comment");
+                    break;
+                } // else c != '*' so cycle in this state
+            } else if (state == LexerState.END_COMMENT) {
+                c = nextChar();
+                if (c == ')') {
+                    state = LexerState.START;
+                    trimLeft();
+                    lexemeStart = currPos;
+                    c = nextChar();
+                } else if (c != '*') {
+                    state = LexerState.BEGIN_COMMENT;
+                } // else c == '*' so cycle in this state
             }
         } // endwhile
         return new Token(lexeme.toString(), type, lexemeStart);
@@ -370,15 +398,27 @@ public class Lexer {
     }
 
     public void error(int errorPos, String errorMsg) {
+        int gap = errorPos-beginningOfLine;
+        if (gap == -1) {
+            // we usually pass in currPos-1 so:
+            // currPos-1-beginningOfLine == -1
+            // currPos-beginningOfLine == 0
+            // currPos == beginningOfLine
+            // so the error is at a newline char
+            gap++;
+            // we cannot print previous line since the newline has been consumed
+            // beginningOfLine was updated, previous value is not retrievable
+            // least we can do is increment gap so negative index isn't printed
+        }
         System.out.printf("%s:%d:%d: error: %s\n", fileName, lineNum+1,
-                          errorPos, errorMsg);
+                          gap, errorMsg);
         System.out.printf("    %-3d|", lineNum+1);
         printCurrLine();
 
         System.out.print("       |");
         StringBuilder offset = new StringBuilder();
         // TODO: 8-wide tab alignment
-        for (int i = 0; i < errorPos; i++)
+        for (int i = 0; i < gap; i++)
             offset.append(" ");
         // print(StringBuilder) auto-calls .toString()
         System.out.print(offset);

@@ -339,4 +339,66 @@ public class TestLexer {
         tk = lexer.lex();
         assertEquals(TkType.ILLEGAL, tk.type());
     }
+
+    @ParameterizedTest
+    @CsvSource(quoteCharacter = '"', textBlock = """
+        "(",                0
+        " ( ",              1
+        "(**)(",            4
+        "(**)(    ",        4
+        "(**) (",           5
+        "\t(* ab sfk jff 32 ***@#$@ ds _S_ #@_$!+ *)(", 42
+        "(***) (",          6
+        "(******)(",        8
+        "(**abc*)   (",     11
+        "(*xyz*hi*)(",      10
+        "(*comment**)\t\t(",14
+        "(* newline \n in the comment wow*) (", 34
+        """)
+    @Order(16)
+    public void testLexLparenAndComments(String input, int startPos) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.LPAREN, tk.type());
+        assertEquals("(", tk.lexeme());
+        assertEquals(startPos, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "(**)",
+        "   (**)  ",
+        "\t(* ab sfk jff 32 ***@#$@ ds _S_ #@_$!+ *)",
+        "(***)                     ",
+        "   (******)",
+        " \t (**abc*)   ",
+        "    (*xyz*hi*)",
+        "(*comment**)\t\t",
+        "(* newline \n in the comment wow*)"
+        })
+    @Order(17)
+    public void testSkipComments(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "(**",
+        "(**\n",
+        "(**\n ",
+        "\t\t(***",
+        "(****\n",
+        "  (***** \n    ",
+        "(* newline \n in the comment wow*"
+    })
+    @Order(18)
+    public void testBadComments(String input) {
+        lexer.readString(input);
+        tk = lexer.lex();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
 }
