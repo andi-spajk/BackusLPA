@@ -1,6 +1,7 @@
 package com.andispajk.backuslpa;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -443,5 +444,36 @@ public class TestLexer {
         lexer.readString(input);
         tk = lexer.lex();
         assertEquals(TkType.ILLEGAL, tk.type());
+    }
+
+    @Test
+    @Order(22)
+    public void testSkipInlineComments() {
+        lexer.readString("; inline comment\n\t|");
+        tk = lexer.lex();
+        assertEquals(TkType.NEWLINE, tk.type());
+        assertEquals(16, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.PIPE, tk.type());
+        assertEquals(18, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+
+        lexer.readString("\t; wow 1234 !#%!#@$(*lol*)   \n  <non-terminal>");
+        tk = lexer.lex();
+        assertEquals(TkType.NEWLINE, tk.type());
+        assertEquals(29, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.BNF_IDENT, tk.type());
+        assertEquals(32, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+
+        lexer.readString(";\n");
+        tk = lexer.lex();
+        assertEquals(TkType.NEWLINE, tk.type());
+        assertEquals(1, tk.startPos());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
     }
 }

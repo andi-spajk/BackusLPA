@@ -113,6 +113,7 @@ public class Lexer {
         if (currPos >= sourceLen)
             return '\0';
         // currPos is always one ahead of the char read by nextChar()
+        // so just checking currPos is peeking
         return source.charAt(currPos);
     }
 
@@ -375,6 +376,7 @@ public class Lexer {
                 c = nextChar();
                 if (c == ')') {
                     state = LexerState.START;
+                    // reset state machine
                     trimLeft();
                     lexemeStart = currPos;
                     c = nextChar();
@@ -428,6 +430,14 @@ public class Lexer {
                     error(currPos-1, "illegal directive");
                     break;
                 }
+            } else { // state == LexerState.INLINE_COMMENT
+                c = nextChar();
+                if (c == '\n') {
+                    state = LexerState.ACCEPT;
+                    type = TkType.NEWLINE;
+                    lexemeStart = currPos-1;
+                    lexeme.append(c);
+                }
             }
         } // endwhile
         return new Token(lexeme.toString(), type, lexemeStart);
@@ -446,6 +456,7 @@ public class Lexer {
 
     public void error(int errorPos, String errorMsg) {
         int gap = errorPos-beginningOfLine;
+        // TODO: print errors that occur on newline chars
         if (gap == -1) {
             // we usually pass in currPos-1 so:
             // currPos-1-beginningOfLine == -1
