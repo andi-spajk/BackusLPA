@@ -1,7 +1,7 @@
 /** Lexer.java
 
 Perform lexical analysis on grammars written in BNF or EBNF. Consumes text and
-produces tokens.
+produces tokens. Uses a direct-coded scanner.
 
 */
 

@@ -1,6 +1,6 @@
 /** Parser.java
 
-Parse a BNF/EBNF grammar for syntactic correctness.
+Parse a BNF/EBNF grammar for syntactic correctness using recursive descent.
 
 */
 
@@ -10,21 +10,10 @@ public class Parser {
     private final Lexer lexer;
     private Token tk;
     private TkType mode;
-    private boolean haltParse;
 
     public Parser(Lexer lexer) {
         this.lexer = lexer;
         mode = TkType.ILLEGAL;
-        haltParse = false;
-    }
-
-    /* reset()
-
-        Reset internal state of the parser.
-    */
-    public void reset() {
-        mode = TkType.ILLEGAL;
-        haltParse = false;
     }
 
     /* trimNewlines()
@@ -34,6 +23,7 @@ public class Parser {
     public void trimNewlines() {
         tk = lexer.peek();
         while (tk.type() == TkType.NEWLINE) {
+            // consume newline
             lexer.lex();
             tk = lexer.peek();
         }
@@ -68,7 +58,7 @@ public class Parser {
             return false;
         else if (mode == TkType.EBNF_MODE && type != TkType.EBNF_IDENT)
             return false;
-        // consume the token
+        // consume nonterminal symbol
         lexer.lex();
         return true;
     }
@@ -84,19 +74,11 @@ public class Parser {
         // matchNonterminal failed, so tk wasn't consumed
         TkType type = tk.type();
         if (type == TkType.CHAR || type == TkType.STRING) {
+            // consume terminal symbol
             lexer.lex();
             return true;
         }
 
-        String modeStr = "";
-        if (mode == TkType.BNF_MODE)
-            modeStr = "BNF";
-        else if (mode == TkType.EBNF_MODE)
-            modeStr = "EBNF";
-        String errorMsg = String.format("expected char, string, or %s nonterminal symbol",
-                                        modeStr);
-        lexer.error(tk.startPos(), errorMsg);
-        haltParse = true;
         return false;
     }
 
@@ -110,6 +92,7 @@ public class Parser {
         TkType type = tk.type();
         if (type == TkType.STAR || type == TkType.PLUS ||
             type == TkType.QUESTION) {
+            // consume modifier
             lexer.lex();
             return true;
         }
@@ -126,5 +109,100 @@ public class Parser {
             return false;
         matchModifier();
         return true;
+    }
+
+    /* parseTerm()
+        @return     true if EBNF term is found, else false
+
+        Parse a term and consume its tokens.
+    */
+    public boolean parseTerm() {
+        tk = lexer.peek();
+        TkType opening = tk.type();
+        TkType closing;
+        String expected;
+        if (opening == TkType.LPAREN) {
+            // consume left parenthesis
+            lexer.lex();
+
+            if (!parseRhs())
+                return false;
+
+            tk = lexer.lex();
+            if (tk.type() != TkType.RPAREN) {
+                lexer.error(tk.startPos(), "expected ')'");
+                return false;
+            }
+
+            matchModifier();
+        } else if (opening == TkType.LBRACKET || opening == TkType.LCURLY) {
+            // consume left curly brace or square bracket
+            lexer.lex();
+
+            if (!parseRhs())
+                return false;
+
+            if (opening == TkType.LBRACKET) {
+                closing = TkType.RBRACKET;
+                expected = "]";
+            } else {
+                closing = TkType.RCURLY;
+                expected = "}";
+            }
+            tk = lexer.lex();
+            if (tk.type() != closing) {
+                lexer.error(tk.startPos(), String.format("expected '%s'",
+                                                         expected));
+                return false;
+            }
+        } else {
+            return parseFactor();
+        }
+        return true;
+    }
+
+    /* parseRhs()
+        @return     true if valid RHS of production rule is found, else false
+
+        Parse the right-hand side of a production rule and consume its tokens.
+    */
+    public boolean parseRhs() {
+        if (mode == TkType.BNF_MODE) {
+            // consume list of symbols
+            if (!parseSymbol())
+                return false;
+            while (parseSymbol()) {}
+
+            // consume optional list of alternate productions
+            while (parseAlternation()) {}
+
+            return true;
+        } else if (mode == TkType.EBNF_MODE) {
+            if (!parseTerm())
+                return false;
+            while (parseTerm()) {}
+
+            while (parseAlternation()) {}
+
+            return true;
+        }
+        return false;
+    }
+
+    /* parseAlternation()
+        @return     true if valid alternate production rule is found, else false
+
+        Parse an alternate production rule and consume its tokens.
+    */
+    public boolean parseAlternation() {
+        trimNewlines();
+        tk = lexer.peek();
+        if (tk.type() != TkType.PIPE) {
+            // no alternation, so just end the parsing procedure
+            return false;
+        }
+        // consume pipe
+        lexer.lex();
+        return parseRhs();
     }
 }

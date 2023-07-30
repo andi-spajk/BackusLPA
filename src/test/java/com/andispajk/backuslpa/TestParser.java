@@ -154,4 +154,117 @@ public class TestParser {
         tk = lexer.lex();
         assertEquals(TkType.LPAREN, tk.type());
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "<symbol> <symbol2> \"wow\" <more> 'k'\n",
+        "'a' | 'b' | 'c'",
+        "<symbol>\n| <newline-occurred>  \n\n| <two-newlines>\n",
+        "\"grammar\" \n | <rules> <are> <cool> \n | 'b' 'y' 'e'"
+    })
+    @Order(10)
+    public void testBNFparseRhsAndAlternation(String input) {
+        // must test both rhs and alternation since they're mutually recursive
+        lexer.readString(".BNF");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseRhs());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "term1 \t '.' \t term2 \t \">>>\" \t term3",
+        "q | x | c",
+        "alts\n | newline \n\n | two \"of them\"",
+        "loooooong | looooooong more more more | 'a' 'b' 'c'",
+        "(match (\"the\" ( parentheses ) ) )\n | [add (modifiers)*] {lol}",
+        "([{{([{([({\"lol\"})])}])}}])",
+        "(a)*(a)+(a)?",
+        "(alts | inside) \n | [brackets | wow] \n | {\"epic\" | hi}",
+        "(alts | with \n | newlines ) \n | [alt \n | newline] \n | {alt \n | alt}",
+        "(one)",
+        "[two]",
+        "{three}"
+    })
+    @Order(11)
+    public void testEBNFparseRhs(String input) {
+        // must test parseTerm, parseAlternation, and parseRhs all at once
+        // since they are all mutually recursive
+        lexer.readString(".EBNF");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseRhs());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "  |",
+        "::=",
+        "\n"
+    })
+    @Order(12)
+    public void testBNFparseRhsErrors(String input) {
+        lexer.readString(".BNF");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertFalse(parser.parseRhs());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "<bad-rhs> ::=\n",
+        "<more-bad>\n | \n",
+        "<more-bad>\n | \n <surprise>"
+    })
+    @Order(13)
+    public void testBNFparseRhsErrors2ndCall(String input) {
+        lexer.readString(".BNF");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseRhs());
+        assertFalse(parser.parseRhs());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "()",
+        "[]",
+        "{}",
+        "*+?",
+        "\n",
+        "(oops",
+        "[ it \"doesn't close o h noes\"\n",
+        "{{{{lol"
+    })
+    @Order(14)
+    public void testEBNFparseRhsErrors(String input) {
+        lexer.readString(".EBNF");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertFalse(parser.parseRhs());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "(watch)**",
+        "(unbalanced(like(hell(uhoh))))))))",
+        "[b]*",
+        "[b]+",
+        "[b]?",
+        "{c}*",
+        "{c}+",
+        "{c}?"
+        })
+    @Order(15)
+    public void testEBNFparseRhsErrors2ndCall(String input) {
+        lexer.readString(".EBNF");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseRhs());
+        assertFalse(parser.parseRhs());
+    }
 }
