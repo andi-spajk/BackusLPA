@@ -207,11 +207,12 @@ public class TestParser {
         "\n"
     })
     @Order(12)
-    public void testBNFparseRhsErrors(String input) {
+    public void testBNFparseRhsError(String input) {
         lexer.readString(".BNF");
         parser.parseDirective();
         lexer.readString(input);
         assertFalse(parser.parseRhs());
+        assertTrue(parser.foundUnmatchedSymbol());
     }
 
     @ParameterizedTest
@@ -221,12 +222,14 @@ public class TestParser {
         "<more-bad>\n | \n <surprise>"
     })
     @Order(13)
-    public void testBNFparseRhsErrors2ndCall(String input) {
+    public void testBNFparseRhsError2ndCall(String input) {
         lexer.readString(".BNF");
         parser.parseDirective();
         lexer.readString(input);
         assertTrue(parser.parseRhs());
+        parser.resetUnmatchedSymbol();
         assertFalse(parser.parseRhs());
+        assertTrue(parser.foundUnmatchedSymbol());
     }
 
     @ParameterizedTest
@@ -241,11 +244,12 @@ public class TestParser {
         "{{{{lol"
     })
     @Order(14)
-    public void testEBNFparseRhsErrors(String input) {
+    public void testEBNFparseRhsError(String input) {
         lexer.readString(".EBNF");
         parser.parseDirective();
         lexer.readString(input);
         assertFalse(parser.parseRhs());
+        assertTrue(parser.foundUnmatchedSymbol());
     }
 
     @ParameterizedTest
@@ -260,11 +264,121 @@ public class TestParser {
         "{c}?"
         })
     @Order(15)
-    public void testEBNFparseRhsErrors2ndCall(String input) {
+    public void testEBNFparseRhsError2ndCall(String input) {
         lexer.readString(".EBNF");
         parser.parseDirective();
         lexer.readString(input);
         assertTrue(parser.parseRhs());
+        parser.resetUnmatchedSymbol();
         assertFalse(parser.parseRhs());
+        assertTrue(parser.foundUnmatchedSymbol());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "<1> ::= <symbol> <symbol2> \"wow\" <more> 'k'\n",
+        "<2> ::= 'a' | 'b' | 'c'",
+        "<3> ::= <symbol>\n| <newline-occurred>  \n\n| <two-newlines>\n",
+        "<4> ::= \"grammar\" \n | <rules> <are> <cool> \n | 'b' 'y' 'e'"
+    })
+    @Order(16)
+    public void testBNFparseProduction(String input) {
+        lexer.readString(".bnf");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseProduction());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "uh = term1 \t '.' \t term2 \t \">>>\" \t term3",
+        "uh = q | x | c",
+        "uh = alts\n | newline \n\n | two \"of them\"",
+        "uh = loooooong | looooooong more more more | 'a' 'b' 'c'",
+        "uh = (match (\"the\" ( parentheses ) ) )\n | [add (modifiers)*] {lol}",
+        "uh = ([{{([{([({\"lol\"})])}])}}])",
+        "uh = (a)*(a)+(a)?",
+        "uh = (alts | inside) \n | [brackets | wow] \n | {\"epic\" | hi}",
+        "uh = (alts | with \n | newlines ) \n | [alt \n | newline] \n | {alt \n | alt}",
+        "uh = (one)",
+        "uh = [two]",
+        "uh = {three}"
+    })
+    @Order(17)
+    public void testEBNFparseProduction(String input) {
+        lexer.readString(".ebnf");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseProduction());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "<rule> ::=   |",
+        "<rule> ::= ::=",
+        "<rule> ::= \n",
+        "<rule> ::= "
+    })
+    @Order(18)
+    public void testBNFparseProductionError(String input) {
+        lexer.readString(".bnf");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertFalse(parser.parseProduction());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "rule = ()",
+        "rule = []",
+        "rule = {}",
+        "rule = *+?",
+        "rule = \n",
+        "rule = (oops",
+        "rule = [ it \"doesn't close o h noes\"\n",
+        "rule = {{{{lol",
+        "rule = "
+    })
+    @Order(19)
+    public void testEBNFparseProductionError(String input) {
+        lexer.readString(".ebnf");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertFalse(parser.parseProduction());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "<rule> ::= <bad-rhs> ::=\n",
+        "<rule> ::= <more-bad>\n | \n",
+        "<rule> ::= <more-bad>\n | \n <surprise>"
+    })
+    @Order(20)
+    public void testBNFparseProductionError2ndCall(String input) {
+        lexer.readString(".bnf");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseProduction());
+        assertFalse(parser.parseProduction());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "rule = (watch)**",
+        "rule = (unbalanced(like(hell(uhoh))))))))",
+        "rule = [b]*",
+        "rule = [b]+",
+        "rule = [b]?",
+        "rule = {c}*",
+        "rule = {c}+",
+        "rule = {c}?"
+    })
+    @Order(21)
+    public void testEBNFparseProductionError2ndCall(String input) {
+        lexer.readString(".ebnf");
+        parser.parseDirective();
+        lexer.readString(input);
+        assertTrue(parser.parseProduction());
+        assertFalse(parser.parseProduction());
     }
 }

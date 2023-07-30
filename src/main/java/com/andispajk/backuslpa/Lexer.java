@@ -20,10 +20,6 @@ public class Lexer {
     private int lineNum;
     private int beginningOfLine;
 
-    /* Lexer()
-
-        Construct a Lexer object that will read input and lexically analyze it.
-    */
     public Lexer() {
         fileName = "";
         source = new StringBuilder();
@@ -461,9 +457,11 @@ public class Lexer {
     */
     private void printCurrLine() {
         int i = beginningOfLine;
-        char c = '\0';
-        while (c != '\n' && i < sourceLen) {
+        char c;
+        while (i < sourceLen) {
             c = source.charAt(i);
+            if (c == '\n')
+                break;
             System.out.print(c);
             i++;
         }
