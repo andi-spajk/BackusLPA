@@ -1,6 +1,8 @@
 package com.andispajk.backuslpa;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -44,10 +46,37 @@ public class TestParser {
         " \t  \n   \t\n  \n\t\t \n  "
     })
     @Order(2)
-    public void testTrimManyNewlines(String input) {
+    public void testOnlyNewlines(String input) {
         lexer.readString(input);
         parser.trimNewlines();
         tk = lexer.lex();
         assertEquals(TkType.EOF, tk.type());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "\t\t.BNF\n",
+        ".EBNF",
+        "\n.BNF",
+        "\n\n\n\n\n\n\t\t.EBNF"
+    })
+    @Order(3)
+    public void testParseDirective(String input) {
+        lexer.readString(input);
+        parser.trimNewlines();
+        assertTrue(parser.parseDirective());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "<nonterminal>",
+        "::=",
+        "     \"woah memes\""
+    })
+    @Order(4)
+    public void parseDirectiveError(String input) {
+        lexer.readString(input);
+        parser.trimNewlines();
+        assertFalse(parser.parseDirective());
     }
 }

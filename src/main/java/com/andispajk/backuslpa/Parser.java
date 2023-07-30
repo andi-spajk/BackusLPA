@@ -28,4 +28,21 @@ public class Parser {
             tk = lexer.peek();
         }
     }
+
+    /* parseDirective()
+        @return     true if mode directive found, else false
+
+        Parse a .BNF or .EBNF mode directive.
+    */
+    public boolean parseDirective() {
+        tk = lexer.lex();
+        TkType type = tk.type();
+        if (type == TkType.BNF_MODE || type == TkType.EBNF_MODE) {
+            mode = type;
+            return true;
+        } else {
+            lexer.error(tk.startPos(), "no directive found");
+            return false;
+        }
+    }
 }

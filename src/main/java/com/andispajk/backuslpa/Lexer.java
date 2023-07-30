@@ -455,6 +455,10 @@ public class Lexer {
         return new Token(lexeme.toString(), type, lexemeStart);
     }
 
+    /* printCurrLine()
+
+        Print the current line that the Lexer is reading.
+    */
     private void printCurrLine() {
         int i = beginningOfLine;
         char c = '\0';
@@ -466,6 +470,13 @@ public class Lexer {
         System.out.print("\n");
     }
 
+    /* error()
+        @errorPos       location of error char
+        @errorMsg       error message to print
+
+        Print an error message, along with the line, line number, and an error
+        arrow.
+    */
     public void error(int errorPos, String errorMsg) {
         int gap = errorPos-beginningOfLine;
         if (gap == -1) {
