@@ -17,7 +17,8 @@ public class Main {
         lexer.readFile(args[0]);
         Token tk = lexer.lex();
         while (tk.type() != TkType.EOF) {
-            tk.print();
+            if (tk.type() != TkType.NEWLINE)
+                tk.print();
             tk = lexer.lex();
         }
     }

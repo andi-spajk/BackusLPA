@@ -1,0 +1,10 @@
+.EBNF
+
+rule = (term
+     |  "\\W\\O\\W\\"
+     |  alternations )
+
+rule2 = [this
+      |  is
+      |  "not allowed";]
+        ]

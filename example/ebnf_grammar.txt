@@ -14,14 +14,14 @@ symbol = terminal | nonterminal
 
 nonterminal = alpha {alpha | digit | '_'}
 
-terminal = ''' char_literal '''
+terminal = '\'' char_literal '\''
          | '"' {string_char} '"'
 
 char_literal = char | '"' | char_escape
-char_escape = "\'" | escape
+char_escape = "\\'" | escape
 
 string_char = char | "'" | string_escape
-string_escape = "\"" | escape
+string_escape = "\\\"" | escape
 
 escape = "\\" | "\n" | "\r" | "\t" | "\b" | "\f" | "\v"
 char = '`' | '-' | '=' | '[' | ']' | ';' | ',' | '.' | '/' | '!' | '~' | '_'
