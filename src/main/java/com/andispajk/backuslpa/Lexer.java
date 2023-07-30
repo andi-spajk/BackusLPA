@@ -19,7 +19,6 @@ public class Lexer {
     private int currPos;
     private int lineNum;
     private int beginningOfLine;
-    private boolean endOfFile;
 
     /* Lexer()
 
@@ -32,7 +31,6 @@ public class Lexer {
         currPos = 0;
         lineNum = 0;
         beginningOfLine = 0;
-        endOfFile = false;
     }
 
     /* readFile()
@@ -63,7 +61,6 @@ public class Lexer {
         currPos = 0;
         lineNum = 0;
         beginningOfLine = 0;
-        endOfFile = false;
     }
 
     /* readString
@@ -80,7 +77,6 @@ public class Lexer {
         currPos = 0;
         lineNum = 0;
         beginningOfLine = 0;
-        endOfFile = false;
     }
 
     /* nextChar()
@@ -91,7 +87,6 @@ public class Lexer {
     private char nextChar() {
         char c;
         if (currPos >= sourceLen) {
-            endOfFile = true;
             return '\0';
         }
 
@@ -104,12 +99,12 @@ public class Lexer {
         return c;
     }
 
-    /* peek()
+    /* peekChar()
         @return     the char right after the char retrieved by nextChar()
 
         Retrieve the next character without consuming it.
     */
-    private char peek() {
+    private char peekChar() {
         if (currPos >= sourceLen)
             return '\0';
         // currPos is always one ahead of the char read by nextChar()
@@ -124,12 +119,12 @@ public class Lexer {
         character in the input file.
     */
     private void trimLeft() {
-        char c = peek();
+        char c = peekChar();
         while (c == ' ' || c == '\t') {
             nextChar();
-            c = peek();
+            c = peekChar();
         }
-        // Why we use peek() to update loop conditions:
+        // Why we use peekChar() to update loop conditions:
         // After reading the last whitespace char, currPos increments to the
         // char right after that whitespace. If that new char is NOT whitespace,
         // we want to end the loop so nextChar() reads that new char at currPos!
@@ -154,7 +149,7 @@ public class Lexer {
         lexemeStart = currPos;
         c = nextChar();
 
-        if (endOfFile)
+        if (c == '\0')
             return new Token("", TkType.EOF, currPos);
 
         state = LexerState.START;
@@ -242,7 +237,7 @@ public class Lexer {
                     break;
                 }
             } else if (state == LexerState.EBNF_CHAR) {
-                c = peek();
+                c = peekChar();
                 if (Character.isLetterOrDigit(c) || c == '_') {
                     // stay in this state
                     lexeme.append(c);
@@ -369,7 +364,7 @@ public class Lexer {
                     break;
                 }
             } else if (state == LexerState.MAYBE_LPAREN) {
-                c = peek();
+                c = peekChar();
                 if (c == '*') {
                     state = LexerState.BEGIN_COMMENT;
                     // delete the '(' that was appended during the start state
@@ -486,6 +481,7 @@ public class Lexer {
         printCurrLine();
 
         System.out.print("       |");
+
         // determine number of spaces to print to ensure 8-wide tab alignment
         int numSpaces = 0;
         int tabAlign = 0;
@@ -501,8 +497,23 @@ public class Lexer {
                 tabAlign++;
             }
         }
-
         System.out.print(" ".repeat(numSpaces));
         System.out.print("^\n\n");
+    }
+
+    /* peek()
+        @return     the next token
+
+        Returns the next token in the input without consuming it.
+    */
+    public Token peek() {
+        int saveCurrPos = currPos;
+        int saveLineNum = lineNum;
+        int saveBol = beginningOfLine;
+        Token tk = lex();
+        currPos = saveCurrPos;
+        lineNum = saveLineNum;
+        beginningOfLine = saveBol;
+        return tk;
     }
 }

@@ -480,4 +480,50 @@ public class TestLexer {
         tk = lexer.lex();
         assertEquals(TkType.EOF, tk.type());
     }
+
+    @Test
+    @Order(23)
+    public void testPeek() {
+        String lexeme;
+        int startPos;
+        TkType type;
+        String[] lexemes = {
+            "<non-terminal>",
+            "::=",
+            "\"terminal\"",
+            "\n"
+        };
+        int[] startPositions = {0, 15, 19, 29};
+        TkType[] types = {TkType.BNF_IDENT, TkType.DERIVES, TkType.STRING,
+                          TkType.NEWLINE};
+
+        //                0123456789012345678 901234567 8 9
+        lexer.readString("<non-terminal> ::= \"terminal\"\n");
+        for (int i = 0; i < lexemes.length; i++) {
+            tk = lexer.peek();
+            lexeme = tk.lexeme();
+            startPos = tk.startPos();
+            type = tk.type();
+            assertEquals(lexemes[i], lexeme);
+            assertEquals(startPositions[i], startPos);
+            assertEquals(types[i], type);
+            tk = lexer.lex();
+            assertEquals(lexeme, tk.lexeme());
+            assertEquals(startPos, tk.startPos());
+            assertEquals(type, tk.type());
+        }
+        tk = lexer.peek();
+        assertEquals(TkType.EOF, tk.type());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+        // read past EOF
+        tk = lexer.peek();
+        assertEquals(TkType.EOF, tk.type());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+
+        lexer.readString("<error ::= <wow>");
+        tk = lexer.peek();
+        assertEquals(TkType.ILLEGAL, tk.type());
+    }
 }
