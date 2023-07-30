@@ -10,7 +10,6 @@ This project is still a work in progress.
 
 # TODO
 
-* Parser
 * LL(1) and LR(1) analysis
 * Linux support
 

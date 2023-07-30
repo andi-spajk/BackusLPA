@@ -15,11 +15,8 @@ public class Main {
         }
         Lexer lexer = new Lexer();
         lexer.readFile(args[0]);
-        Token tk = lexer.lex();
-        while (tk.type() != TkType.EOF) {
-            if (tk.type() != TkType.NEWLINE)
-                tk.print();
-            tk = lexer.lex();
-        }
+        Parser parser = new Parser(lexer);
+        if (parser.parseGrammar())
+            System.out.println("success");
     }
 }

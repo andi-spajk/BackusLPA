@@ -29,7 +29,7 @@ public class Parser {
 
     /* resetUnmatchedSymbol()
 
-        Reset the boolean flag that checks for unexpected symbols.
+        Reset the boolean flag that indicates unexpected symbols.
 
         This was really only useful for testing. The user shouldn't have to call
         this since parseProduction resets the flag just fine.
@@ -40,7 +40,7 @@ public class Parser {
 
     /* trimNewlines()
 
-        Consume all newline tokens.
+        Consume all consecutive newline tokens.
     */
     public void trimNewlines() {
         tk = lexer.peek();
@@ -242,7 +242,8 @@ public class Parser {
     */
     public boolean parseProduction() {
         if (!matchNonterminal()) {
-            lexer.error(tk.startPos(), "expected nonterminal symbol");
+            if (tk.type() != TkType.EOF)
+                lexer.error(tk.startPos(), "expected nonterminal symbol");
             return false;
         }
 
@@ -269,5 +270,20 @@ public class Parser {
             return false;
         }
         return true;
+    }
+
+    /* parseGrammar()
+        @return     true if syntactically valid grammar is found, else false
+
+        Parse a grammar.
+    */
+    public boolean parseGrammar() {
+        trimNewlines();
+        if (!parseDirective())
+            return false;
+        trimNewlines();
+        while (parseProduction())
+            trimNewlines();
+        return tk.type() == TkType.EOF;
     }
 }
