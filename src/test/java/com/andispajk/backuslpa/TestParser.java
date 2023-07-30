@@ -79,4 +79,79 @@ public class TestParser {
         parser.trimNewlines();
         assertFalse(parser.parseDirective());
     }
+
+    @Test
+    @Order(5)
+    public void testMatchNonterminal() {
+        lexer.readString(".bnf");
+        assertTrue(parser.parseDirective());
+        lexer.readString("<bnf-non-terminal> bad_ebnf");
+        assertTrue(parser.matchNonterminal());
+        assertFalse(parser.matchNonterminal());
+
+        lexer.readString(".ebnf");
+        assertTrue(parser.parseDirective());
+        lexer.readString("   ebnf_nonterminal12345\n <WTFFFF9999>");
+        assertTrue(parser.matchNonterminal());
+        tk = lexer.lex();
+        assertEquals(TkType.NEWLINE, tk.type());
+        assertFalse(parser.matchNonterminal());
+    }
+
+    @Test
+    @Order(6)
+    public void testParseSymbol() {
+        lexer.readString(".bnf");
+        assertTrue(parser.parseDirective());
+        lexer.readString("<bnf-non-terminal> \"hello\" '$' *");
+        assertTrue(parser.parseSymbol());
+        assertTrue(parser.parseSymbol());
+        assertTrue(parser.parseSymbol());
+        assertFalse(parser.parseSymbol());
+
+        lexer.readString(".EBNF");
+        assertTrue(parser.parseDirective());
+        lexer.readString("\"look\" '>' 9ebnf9nonterminal9 <no>");
+        assertTrue(parser.parseSymbol());
+        assertTrue(parser.parseSymbol());
+        assertTrue(parser.parseSymbol());
+        assertFalse(parser.parseSymbol());
+
+        lexer.readString("whatif <error");
+        assertTrue(parser.parseSymbol());
+        assertFalse(parser.parseSymbol());
+    }
+
+    @Test
+    @Order(7)
+    public void testMatchModifier() {
+        //                1 23 45 67
+        lexer.readString("* ++ *? ?? nomore");
+        for (int i = 0; i < 7; i++)
+            assertTrue(parser.matchModifier());
+        assertFalse(parser.matchModifier());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "nonterminal*",
+        "\"withspace\" +",
+        "'*'?",
+    })
+    @Order(8)
+    public void testParseFactor(String input) {
+        lexer.readString(input);
+        assertTrue(parser.parseFactor());
+        tk = lexer.lex();
+        assertEquals(TkType.EOF, tk.type());
+    }
+
+    @Test
+    @Order(9)
+    public void testParseFactorNoModifier() {
+        lexer.readString("notmodifier (\n");
+        assertTrue(parser.parseFactor());
+        tk = lexer.lex();
+        assertEquals(TkType.LPAREN, tk.type());
+    }
 }
