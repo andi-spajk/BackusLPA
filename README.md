@@ -11,7 +11,6 @@ This project is still a work in progress.
 # TODO
 
 * LL(1) and LR(1) analysis
-* Linux support
 
 
 # Building
@@ -19,26 +18,29 @@ This project is still a work in progress.
 ## Requirements
 * Maven
 * Java 19
-* Windows
+* Windows or Linux
 
 ## Instructions
 * `$ mvn package` to build BackusLPA.
 * `$ mvn test` to run the BackusLPA test suites.
-* `$ mvn compile` to just compile BackusLPA source files.
 * `$ mvn clean` to remove all compiled files and reset to a clean, unbuilt
 slate.
 
 
-# Usage
+# Grammars
+
 Write your BNF/EBNF grammar in a `.txt` file.
-* The grammar file must begin by specifying BNF or EBNF mode, using either the 
+* The grammar file must begin by specifying BNF or EBNF mode, using either the
   directive `.BNF` or `.EBNF` respectively.
-* One production cannot span multiple lines.
+* One production rule cannot span multiple lines.
   * Alternate productions can go onto new line(s), but the line must begin with
   `|`.
-* The empty string is always represented by `""`, not `''`
+* The empty string is always represented by `""`, not `''`.
+* Some sample grammars that illustrate these rules are provided in `examples/`.
 
-Then use the command `$ BackusLPA.bat grammar.txt` to run the program with your
-specified grammar file.
+# Usage
 
-Some sample grammars are provided in `examples/`.
+Use one of these commands to run the program with your specified grammar
+file:
+* Windows: `$ BackusLPA.bat grammar.txt` 
+* Linux: `$ ./BackusLPA.sh grammar.txt`

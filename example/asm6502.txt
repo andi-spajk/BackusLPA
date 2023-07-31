@@ -1,0 +1,42 @@
+(** 6502 assembly syntax in EBNF
+
+	No 65C02. soz
+*)
+
+.EBNF
+
+program = org {directive | line}
+
+org = (".ORG" | '*' '=') number
+
+number = '$' hex {hex}
+       | '%' bin {bin}
+       | dec {dec}
+
+dec = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+hex = dec | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+bin = '0' | '1'
+
+directive = ".END"
+          | ".DEFINE" label number
+
+label = alpha {alpha | dec | '_'}
+
+line = instruction
+     | label (declaration | instruction)
+declaration = ('=' | ".EQU") number
+instruction = mnemonic [operand]
+
+operand = number | immediate | 'A' | indirect
+immediate = '#' number
+indirect = '(' number index
+index = ',' 'X' ')'
+      | ')' ',' 'Y'
+
+mnemonic = "ADC" | "AND" | "ASL" | "BCC" | "BCS" | "BEQ" | "BIT" | "BMI" | "BNE"
+         | "BPL" | "BRK" | "BVC" | "BVS" | "CLC" | "CLD" | "CLI" | "CLV" | "CMP"
+         | "CPX" | "CPY" | "DEC" | "DEX" | "DEY" | "EOR" | "INC" | "INX" | "INY"
+         | "JMP" | "JSR" | "LDA" | "LDX" | "LDY" | "LSR" | "NOP" | "ORA" | "PHA"
+         | "PHP" | "PLA" | "PLP" | "ROL" | "ROR" | "RTI" | "RTS" | "SBC" | "SEC"
+         | "SED" | "SEI" | "STA" | "STX" | "STY" | "TAX" | "TAY" | "TSX" | "TXA"
+         | "TXS" | "TYA"
